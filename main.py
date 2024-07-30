@@ -23,33 +23,40 @@ arrow_left_image = pygame.image.load("Individual Icons/keyboard_73.png")
 arrow_right_image = pygame.image.load("Individual Icons/keyboard_72.png")
 e_key_image = pygame.image.load("Individual Icons/keyboard_15.png")
 h_key_image = pygame.image.load("Individual Icons/keyboard_28.png")
-
-
+space_key_image = pygame.image.load("Individual Icons/keyboard_1.png")
 # Transform the images to fit the screen appropriately
 key_width, key_height = 50, 50
 arrow_left_image = pygame.transform.scale(arrow_left_image, (key_width, key_height))
 arrow_right_image = pygame.transform.scale(arrow_right_image, (key_width, key_height))
+space_key_image = pygame.transform.scale(space_key_image, (key_width * 2, key_height))
 e_key_image = pygame.transform.scale(e_key_image, (key_width, key_height))
 
 # Initial positions (center of the screen)
 left_key_initial_pos = (screen.get_width() // 2 - key_width - 10, screen.get_height() // 2)
 right_key_initial_pos = (screen.get_width() // 2 + 10, screen.get_height() // 2)
-e_key_initial_pos = (screen.get_width() // 2 - key_width // 2, screen.get_height() // 2 + key_height + 10)
+space_key_initial_pos = (screen.get_width() // 2 - key_width, screen.get_height() // 2 + key_height + 10)
+e_key_initial_pos = (screen.get_width() // 2 - key_width // 2, screen.get_height() // 2 + key_height + 20 + 10)
 
 # Final positions (bottom of the screen)
 left_key_final_pos = (100, screen.get_height() - key_height - 10)
 right_key_final_pos = (160, screen.get_height() - key_height - 10)
+space_key_final_pos = (screen.get_width() // 2 - key_width, screen.get_height() - key_height - 10)
 e_key_final_pos = (220, screen.get_height() - key_height - 10)
 
 # Flags to control the display of key images
 show_left_arrow = True
 show_right_arrow = True
+show_space_key = True
 show_e_key = False
 
 # Flags to check if keys have been pressed
 left_key_pressed = False
 right_key_pressed = False
+space_key_pressed = False
 chest_encountered = False
+
+# Flags to control tutorial state
+tutorial_running = True
 
 platforms = [
     Platform(400, 640, 100, 30, "Platforms/Cave - Platforms-copy1.png"),
@@ -84,68 +91,86 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_LEFT]:
-        left_key_pressed = True
-    if keys[pygame.K_RIGHT]:
-        right_key_pressed = True
-
-    if keys[pygame.K_e]:  # Assume 'E' key is used to open the chest
-        if hero.rect.colliderect(chests[0].rect):
-            healing_items.append(chests[0].open())
-            show_e_key = False
-
-    if keys[pygame.K_h]:
-        for healing_item in healing_items:
-            if hero.rect.colliderect(healing_item.rect):
-                hero.heal(healing_item.healing_amount)
-                healing_items.remove(healing_item)
-
-    chests = [chest for chest in chests if not chest.opened]
-
-    enemies = [enemy for enemy in enemies if enemy.alive]
-    if keys[pygame.K_SPACE]:
-        hero.attack(enemies)
-    for enemy in enemies:
-        if abs(enemy.rect.x - hero.rect.x) < 100:
-            enemy.attack(hero)
-        enemy.update(platforms)
-
-    hero.update(keys, platforms)
     screen.fill((255, 255, 255))  # Fill the screen with white
     background.draw(screen)
-    for enemy in enemies:
-        enemy.draw(screen)
 
-    for platform in platforms:
-        platform.draw(screen)
-    for chest in chests:
-        chest.draw(screen)
-    for healing_item in healing_items:
-        healing_item.draw(screen)
-
-    hero.draw(screen)
-
-    # Show and move the key hints
-    if show_left_arrow:
-        if left_key_pressed:
-            screen.blit(arrow_left_image, left_key_final_pos)
-        else:
+    if tutorial_running:
+        # Show the key hints in the center of the screen
+        if not left_key_pressed:
             screen.blit(arrow_left_image, left_key_initial_pos)
-
-    if show_right_arrow:
-        if right_key_pressed:
-            screen.blit(arrow_right_image, right_key_final_pos)
-        else:
+        if not right_key_pressed:
             screen.blit(arrow_right_image, right_key_initial_pos)
+        if not space_key_pressed:
+            screen.blit(space_key_image, space_key_initial_pos)
 
-    if hero.rect.colliderect(chests[0].rect) and not chest_encountered:
-        show_e_key = True
-        chest_encountered = True
-
-    if show_e_key:
-        screen.blit(e_key_image, e_key_initial_pos)
-        if keys[pygame.K_e]:
+        # Check for key presses to complete the tutorial
+        if keys[pygame.K_LEFT]:
+            left_key_pressed = True
+            show_left_arrow = False
+        if keys[pygame.K_RIGHT]:
+            right_key_pressed = True
+            show_right_arrow = False
+        if keys[pygame.K_SPACE]:
+            space_key_pressed = True
+            show_space_key = False
+        if keys[pygame.K_e] and show_e_key:
             show_e_key = False
+
+        # Resume the game if all tutorial keys have been pressed
+        if left_key_pressed and right_key_pressed and space_key_pressed:
+            tutorial_running = False
+    else:
+        # Update and draw game elements
+        if hero.rect.colliderect(chests[0].rect) and not chest_encountered:
+            show_e_key = True
+            chest_encountered = True
+        if show_e_key:
+            screen.blit(e_key_image, e_key_initial_pos) 
+    
+        if keys[pygame.K_e]:  # Assume 'E' key is used to open the chest
+            if hero.rect.colliderect(chests[0].rect):
+                healing_items.append(chests[0].open())
+                show_e_key = False
+
+        if keys[pygame.K_h]:
+            for healing_item in healing_items:
+                if hero.rect.colliderect(healing_item.rect):
+                    hero.heal(healing_item.healing_amount)
+                    healing_items.remove(healing_item)
+
+        chests = [chest for chest in chests if not chest.opened]
+
+        enemies = [enemy for enemy in enemies if enemy.alive]
+        if keys[pygame.K_SPACE]:
+            hero.attack(enemies)
+        for enemy in enemies:
+            if abs(enemy.rect.x - hero.rect.x) < 100:
+                enemy.attack(hero)
+            enemy.update(platforms)
+
+        hero.update(keys, platforms)
+
+        for enemy in enemies:
+            enemy.draw(screen)
+
+        for platform in platforms:
+            platform.draw(screen)
+        for chest in chests:
+            chest.draw(screen)
+        for healing_item in healing_items:
+            healing_item.draw(screen)
+
+        hero.draw(screen)
+
+        # Show the key hints at the bottom of the screen
+        if show_left_arrow:
+            screen.blit(arrow_left_image, left_key_final_pos)
+        if show_right_arrow:
+            screen.blit(arrow_right_image, right_key_final_pos)
+        if show_space_key:
+            screen.blit(space_key_image, space_key_final_pos)
+        if show_e_key:
+            screen.blit(e_key_image, e_key_final_pos)
 
     pygame.display.flip()
     clock.tick(60)
