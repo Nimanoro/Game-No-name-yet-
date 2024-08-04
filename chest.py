@@ -18,7 +18,7 @@ class Chest:
         self.opened = True
         return HealingItem(self.rect.x, self.rect.y, self.healing_item_image_path, self.healing_amount)
 
-    def draw(self, screen):
+    def draw(self, screen, camera_x, camera_y):
         if self.opened:
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time > self.open_duration * 1000:
@@ -26,6 +26,6 @@ class Chest:
                 self.open_frame += 1
                 if self.open_frame >= len(self.open_images):
                     self.open_frame = len(self.open_images) - 1  # Stay on the last frame
-            screen.blit(self.open_images[self.open_frame], self.rect)
+            screen.blit(self.open_images[self.open_frame], (self.rect.x - camera_x, self.rect.y - camera_y))
         else:
-            screen.blit(self.scaled_image, self.rect)
+            screen.blit(self.image, (self.rect.x - camera_x, self.rect.y - camera_y))

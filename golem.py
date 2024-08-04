@@ -118,26 +118,29 @@ class Golem:
 
         self.rect = self.current_image.get_rect(topleft=self.rect.topleft)
 
-    def draw(self, screen):
-        self.draw_hp_bar(screen)
-        screen.blit(self.current_image, self.rect)
+    def draw(self, screen, camera_x, camera_y):
+        if time.time() - self.last_damage_time < 10: 
+            self.draw_hp_bar(screen, (self.rect.x - camera_x, self.rect.y - camera_y))
+        screen.blit(self.current_image, (self.rect.x - camera_x, self.rect.y - camera_y))
+
 
     def take_damage(self, damage):
+        self.last_damage_time = time.time()
         self.hp -= damage
         if self.hp <= 0:
             self.hp = 0
             self.alive = False
 
-    def draw_hp_bar(self, screen):
+    def draw_hp_bar(self, screen, position):
         bar_width = 100
         bar_height = 10
         hp_percentage = self.hp / self.max_hp
         current_bar_width = bar_width * hp_percentage
-        bar_x = self.rect.x + (self.rect.width - bar_width) / 2
-        bar_y = self.rect.y - bar_height - 5
+        bar_x = position[0] + (self.rect.width - bar_width) / 2
+        bar_y = position[1] - bar_height - 5
         pygame.draw.rect(screen, (0, 0, 0), (bar_x, bar_y, bar_width, bar_height))
         pygame.draw.rect(screen, (255, 0, 0), (bar_x, bar_y, current_bar_width, bar_height))
-
+    
     def attack(self, hero):
         current_time = time.time()
         if -50 < self.rect.y - hero.rect.y < 50 and ((self.facing_right and hero.rect.x > self.rect.x ) or (hero.rect.x < self.rect.x and not self.facing_right)) and current_time - self.last_attack_time >= self.attack_cooldown:

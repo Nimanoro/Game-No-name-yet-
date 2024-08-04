@@ -7,4 +7,4 @@ class Background:
         self.rect = self.image.get_rect()
 
     def draw(self, screen):
-        screen.blit(self.image, self.rect)
+        screen.blit(self.image, (0, 0))

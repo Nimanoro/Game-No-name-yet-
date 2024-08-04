@@ -1,5 +1,6 @@
 import pygame
 import time
+from key import Key
 
 class Hero:
     def __init__(self, x, y, speed, max_hp=100, attack_damage=10):
@@ -31,6 +32,7 @@ class Hero:
         self.attack_duration = 0.5 
         self.alive = True
         self.dying = False
+        self.keys = []
         self.walk_images = [pygame.transform.scale(pygame.image.load(f'Tiny-RPG-Character-Asset-Pack-v1.03/Characters(100x100)/Soldier/Soldier/Soldier-Walk/Soldier-walk copy {i + 2}.png').convert_alpha(),
                                                     (self.original_image.get_width() * 5, self.original_image.get_height() * 5))
                             for i in range(8)]
@@ -125,11 +127,12 @@ class Hero:
 
             self.current_image = self.death_images[self.death_frame]
             self.rect = self.current_image.get_rect(topleft=self.rect.topleft)
-        
-    def draw(self, screen):
-        screen.blit(self.current_image, self.rect)
+    
+    def draw(self, screen, camera_x, camera_y):
         if not self.dying:
             self.draw_hp_bar(screen)
+        
+        screen.blit(self.current_image, (self.rect.x - camera_x, self.rect.y - camera_y))
 
     def draw_hp_bar(self, screen):
         bar_width = 200
@@ -140,6 +143,9 @@ class Hero:
         bar_y = screen.get_height() - bar_height - 10
         pygame.draw.rect(screen, (0, 0, 0), (bar_x, bar_y, bar_width, bar_height))
         pygame.draw.rect(screen, (0, 255, 0), (bar_x, bar_y, current_bar_width, bar_height))
+        for key in self.keys:
+            screen.blit(key.image, (bar_x, bar_y - key.image.get_height()))
+        
 
     def check_collision(self, enemy):
         if self.rect.colliderect(enemy.rect):
@@ -184,3 +190,9 @@ class Hero:
         if not chest.opened and self.rect.colliderect(chest.rect):
             return chest.open()
         return None
+    def pick_key(self, key):
+        new_key = Key(key.key, key.lvl, 0, 0, key.image_path)
+        self.keys.append(new_key)
+    
+    def remove_key(self, key):
+        self.keys.remove(key)

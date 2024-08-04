@@ -8,5 +8,5 @@ class Platform:
         
         self.width = (x, x + self.image.get_width())
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self, screen, camera_x, camera_y):
+        screen.blit(self.image, (self.rect.x - camera_x, self.rect.y - camera_y))
